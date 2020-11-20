@@ -1,0 +1,75 @@
+---
+title: "Boosted Stumps"
+author: "Xinyi Zhang"
+date: "11/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Exploration
+```{r setup}
+setwd('/Users/xinyi0351/Desktop/Fall 2020/5243/project 4/')
+library(gbm)
+library(caret)
+high <- read.csv('highDim_dataset.csv')
+low <- read.csv('lowDim_dataset.csv')
+#high['A'] <- apply(high['A'],1,as.factor)
+#low['A'] <- apply(low['A'],1,as.factor)
+```
+
+```{r split}
+# train-test split
+n <- nrow(high)
+n_train <- round(n*(4/5),0)
+train_idx <- sample(1:n,n_train)
+#test_idx <- setdiff(1:2000, train)
+train_high <- high[train_idx,]
+test_high <- high[-train_idx,]
+```
+
+```{r gbt}
+set.seed(2020)
+boost = gbm(A~., data = train_high[-1], 
+            n.trees = 10000, # the number of trees
+            shrinkage = 0.01, # learning rate
+            interaction.depth = 4 # total split
+            )
+summary(boost)
+```
+
+The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluator. 
+
+```{r test}
+#n.trees <- seq(from = 100, to = 10000, by = 100)
+# n.trees set the number of trees to be built. Here I choose 1000 manually.
+pred <- predict(boost, test_high[-c(1,2)],n.trees = 1000, type = 'response')
+length(pred)
+```
+
+```{r plot}
+# plot by A to see the distribution of the predicted value
+g0_index <- test_high$A == 0
+g1_index <- test_high$A == 1
+for(col in colnames(pred)){
+  g0 <- pred[g0_index,col]
+  g1 <- pred[g1_index,col]
+  plot(density(g0),col = 'red')
+  lines(density(g1),col = 'blue')
+  legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
+}
+
+```
+
+The density plot shows the overlap of propensity score between the two groups. 
+
+```{r cm}
+# Confusion matrix
+# I'm not sure if we need to calculate this part but just leave it here. 
+results <- list(ifelse(pred >0.8, 1, 0)) # set the threshold to 0.8
+test_high$A <- as.factor(test_high$A)
+levels(results) <- levels(test_high$A) 
+confusionMatrix(results,test_high$A)
+```
