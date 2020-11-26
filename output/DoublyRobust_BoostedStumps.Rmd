@@ -1,0 +1,130 @@
+---
+title: "DoublyRobust_BoostedStumps"
+author: "Xujie Ma"
+date: "11/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Exploration
+```{r setup}
+setwd('/Users/ma/Documents/GitHub/Fall2020-Project4-group-5/output')
+library(gbm)
+library(caret)
+high <- read.csv('highDim_dataset.csv')
+low <- read.csv('lowDim_dataset.csv')
+#high['A'] <- apply(high['A'],1,as.factor)
+#low['A'] <- apply(low['A'],1,as.factor)
+#nrow(high)
+```
+
+## Calculation for highDim_dataset
+```{r split}
+# train-test split
+n <- nrow(high)
+n_train <- round(n*(4/5),0)
+train_idx <- sample(1:n,n_train)
+#test_idx <- setdiff(1:2000, train)
+train_high <- high[train_idx,]
+test_high <- high[-train_idx,]
+```
+
+Split treatment group and control group and complete regression in each group.
+```{r}
+treatment.group.high<-high[high$A==1,-2]
+control.group.high<-high[high$A==0,-2]
+treatment.model.high<-lm(Y~.,data=treatment.group.high)
+control.model.high<-lm(Y~.,data=control.group.high)
+```
+
+Estimate m1(X) and m0(X) for all entries.
+```{r}
+X.high<-high[-c(1,2)]
+high$m1<-predict(treatment.model.high,X.high)
+high$m0<-predict(control.model.high,X.high)
+```
+
+```{r gbt}
+set.seed(2020)
+boost.high = gbm(A~., data = train_high[-1], 
+            n.trees = 10000, # the number of trees
+            shrinkage = 0.01, # learning rate
+            interaction.depth = 4 # total split
+            )
+# summary(boost.high)
+```
+
+The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluator. 
+
+Calculate propensity scores for all entries in high.csv
+```{r test}
+#n.trees <- seq(from = 100, to = 10000, by = 100)
+# n.trees set the number of trees to be built. Here I choose 1000 manually.
+high$e <- predict(boost.high, X.high, n.trees = 1000, type = 'response')
+```
+
+Calculate each part in doubly robust estimation and count out the final result.
+```{r}
+high$p1<-ifelse(high$A==1,(high$Y-high$m1)/high$e,0)
+high$p2<-ifelse(high$A==0,(high$Y-high$m0)/(1-high$e),0)
+high$result<-high$m1-high$m0+high$p1-high$p2
+ATE.high<-mean(high$result)
+ATE.high
+```
+
+## Calculation for lowDim_dataset
+```{r split}
+# train-test split
+n <- nrow(low)
+n_train <- round(n*(4/5),0)
+train_idx <- sample(1:n,n_train)
+#test_idx <- setdiff(1:2000, train)
+train_low <- low[train_idx,]
+test_low <- low[-train_idx,]
+```
+
+Split treatment group and control group and complete regression in each group.
+```{r}
+treatment.group.low<-low[low$A==1,-2]
+control.group.low<-low[low$A==0,-2]
+treatment.model.low<-lm(Y~.,data=treatment.group.low)
+control.model.low<-lm(Y~.,data=control.group.low)
+```
+
+Estimate m1(X) and m0(X) for all entries.
+```{r}
+X.low<-low[-c(1,2)]
+low$m1<-predict(treatment.model.low,X.low)
+low$m0<-predict(control.model.low,X.low)
+```
+
+```{r gbt}
+set.seed(2020)
+boost.low = gbm(A~., data = train_low[-1], 
+            n.trees = 10000, # the number of trees
+            shrinkage = 0.01, # learning rate
+            interaction.depth = 4 # total split
+            )
+# summary(boost.low)
+```
+
+The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluator. 
+
+Calculate propensity scores for all entries in low.csv
+```{r test}
+#n.trees <- seq(from = 100, to = 10000, by = 100)
+# n.trees set the number of trees to be built. Here I choose 1000 manually.
+low$e <- predict(boost.low, X.low, n.trees = 1000, type = 'response')
+```
+
+Calculate each part in doubly robust estimation and count out the final result.
+```{r}
+low$p1<-ifelse(low$A==1,(low$Y-low$m1)/low$e,0)
+low$p2<-ifelse(low$A==0,(low$Y-low$m0)/(1-low$e),0)
+low$result<-low$m1-low$m0+low$p1-low$p2
+ATE.low<-mean(low$result)
+ATE.low
+```
