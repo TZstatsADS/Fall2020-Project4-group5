@@ -8,9 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+**The ATEs we got from boosted stumps and regression adjustment are 2.4108 and -3.1261. We conclude that it is a close estimate where the true ATEs that are 2.5 and -3.**
 
-## Data Exploration
-```{r setup}
+
+## Data Preparation
+```{r}
 setwd('/Users/xinyi0351/Desktop/Fall 2020/5243/project 4/')
 library(gbm)
 library(caret)
@@ -20,24 +22,79 @@ low <- read.csv('lowDim_dataset.csv')
 #low['A'] <- apply(low['A'],1,as.factor)
 ```
 
+# Low Dimension
+```{r}
+# trani-test split
+n <- nrow(low)
+n_train <- round(n*(4/5),0)
+train_idx <- sample(1:n,n_train)
+# test_idx <- setdiff(1:2000, train)
+train_low <- low[train_idx,]
+test_low <- low[-train_idx,]
+```
+
+## Propensity Score
+```{r}
+set.seed(2020)
+boost0 = gbm(A~., data = train_low[-1], 
+            n.trees = 2000, # the number of trees, 100, 1000. 10000, no big diff
+            shrinkage = 0.001, # learning rate, 0.01, 0.001, 0.0001
+            interaction.depth = 3 # total split, 3, 4, 5
+            )
+summary(boost0)
+```
+
+```{r}
+#n.trees <- seq(from = 100, to = 10000, by = 100)
+# n.trees set the number of trees to be built. Here I choose 1000 manually.
+pred0 <- predict(boost0, test_low[-c(1,2)],n.trees = 1000, type = 'response')
+length(pred0)
+```
+
+```{r}
+# plot by A to see the distribution of the predicted value
+g0_index <- test_low$A == 0
+g1_index <- test_low$A == 1
+for(col in colnames(pred0)){
+  g0 <- pred0[g0_index,col]
+  g1 <- pred0[g1_index,col]
+  plot(density(g0),col = 'red')
+  lines(density(g1),col = 'blue')
+  legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
+}
+```
+
+## ATE
+```{r regression adjustment1}
+# build a regression model based on the propensity score
+# structure the data frame
+ps0 <- predict(boost0, low[-c(1,2)],n.trees = 100, type = 'response')
+df0<-data.frame(low$Y,low$A, ps0)
+colnames(df0) <- c('Y','A','PS')
+model0<-lm(df0$Y~df0$A+df0$PS)
+summary(model0)
+```
+
+# High Dimension
 ```{r split}
 # train-test split
 n <- nrow(high)
 n_train <- round(n*(4/5),0)
 train_idx <- sample(1:n,n_train)
-#test_idx <- setdiff(1:2000, train)
+# test_idx <- setdiff(1:2000, train)
 train_high <- high[train_idx,]
 test_high <- high[-train_idx,]
 ```
 
+## Propensity Score
 ```{r gbt}
 set.seed(2020)
-boost = gbm(A~., data = train_high[-1], 
-            n.trees = 10000, # the number of trees
-            shrinkage = 0.01, # learning rate
-            interaction.depth = 4 # total split
+boost1 = gbm(A~., data = train_high[-1], 
+            n.trees = 1000, # the number of trees
+            shrinkage = 0.001, # learning rate
+            interaction.depth = 2 # total split
             )
-summary(boost)
+summary(boost1)
 ```
 
 The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluator. 
@@ -45,31 +102,31 @@ The summary of the model gives a feature importance plot. Conduct prediction on 
 ```{r test}
 #n.trees <- seq(from = 100, to = 10000, by = 100)
 # n.trees set the number of trees to be built. Here I choose 1000 manually.
-pred <- predict(boost, test_high[-c(1,2)],n.trees = 1000, type = 'response')
-length(pred)
+pred1 <- predict(boost1, test_high[-c(1,2)],n.trees = 1000, type = 'response')
+length(pred1)
 ```
-
 ```{r plot}
 # plot by A to see the distribution of the predicted value
 g0_index <- test_high$A == 0
 g1_index <- test_high$A == 1
-for(col in colnames(pred)){
+for(col in colnames(pred1)){
   g0 <- pred[g0_index,col]
   g1 <- pred[g1_index,col]
   plot(density(g0),col = 'red')
   lines(density(g1),col = 'blue')
   legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
 }
-
 ```
 
 The density plot shows the overlap of propensity score between the two groups. 
 
-```{r cm}
-# Confusion matrix
-# I'm not sure if we need to calculate this part but just leave it here. 
-results <- list(ifelse(pred >0.8, 1, 0)) # set the threshold to 0.8
-test_high$A <- as.factor(test_high$A)
-levels(results) <- levels(test_high$A) 
-confusionMatrix(results,test_high$A)
+## ATE
+```{r regression adjustment2}
+# build a regression model based on the propensity score
+# structure the data frame
+ps1 <- predict(boost1, high[-c(1,2)],n.trees = 100, type = 'response')
+df1<-data.frame(high$Y,high$A, ps1)
+colnames(df1) <- c('Y','A','PS')
+model1<-lm(df1$Y~df1$A+df1$PS)
+summary(model1)
 ```
