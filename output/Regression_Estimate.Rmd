@@ -1,12 +1,14 @@
 ---
 title: "Regression_Estimate"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
 ```{r}
-high_data <-read.csv('highDim_dataset.csv')
-low_data <-read.csv('lowDim_dataset.csv')
+high_data <-read.csv('../data/highDim_dataset.csv')
+low_data <-read.csv('../data/lowDim_dataset.csv')
 
 N_high <- dim(high_data)[1]
 N_low <- dim(low_data)[1]
@@ -28,22 +30,23 @@ N_low_untreated <- dim(low_untreated)[1]
 ```
 
 ```{r}
-high_treated_lm <- lm(Y~.,data = high_treated)
-high_untreated_lm <- lm(Y~.,data = high_untreated)
+time<- system.time({
+  high_treated_lm <- lm(Y~.,data = high_treated);
+  high_untreated_lm <- lm(Y~.,data = high_untreated);
+  high_treated_predict_all <- predict(high_treated_lm,newdata = high_data_X);
+  high_untreated_predict_all <- predict(high_untreated_lm,newdata = high_data_X)})
+train_time_high <- time[1]
+train_time_high
 
-low_treated_lm <- lm(Y~.,data = low_treated)
-low_untreated_lm <- lm(Y~.,data = low_untreated)
+time<- system.time({
+  low_treated_lm <- lm(Y~.,data = low_treated);
+  low_untreated_lm <- lm(Y~.,data = low_untreated);
+  low_treated_predict_all <- predict(low_treated_lm,newdata = low_data_X);
+  low_untreated_predict_all <- predict(low_untreated_lm,newdata = low_data_X)})
+train_time_low <- time[1]
+train_time_low
+
 ```
-
-
-```{r}
-high_treated_predict_all <- predict(high_treated_lm,newdata = high_data_X)
-high_untreated_predict_all <- predict(high_untreated_lm,newdata = high_data_X)
-
-low_treated_predict_all <- predict(low_treated_lm,newdata = low_data_X)
-low_untreated_predict_all <- predict(low_untreated_lm,newdata = low_data_X)
-```
-
 
 ```{r}
 reg_est_ATE_high<-sum(high_treated_predict_all - high_untreated_predict_all)/N_high
