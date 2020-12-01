@@ -13,8 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 **The ATEs we got from boosted stumps and regression adjustment are 2.5271 and -3.083. We conclude that it is a close estimate where the true ATEs that are 2.5 and -3.**
 
 ## Methodology and Implementation
-1. Reference: 
-D'Agostino RB Jr. Propensity score methods for bias reduction in the comparison of a treatment to a non-randomized control group. Stat Med. 1998 Oct 15;17(19):2265-81. doi: 10.1002/(sici)1097-0258(19981015)17:19<2265::aid-sim918>3.0.co;2-b. PMID: 9802183.
+1. Reference: D'Agostino RB Jr. Propensity score methods for bias reduction in the comparison of a treatment to a non-randomized control group. Stat Med. 1998 Oct 15;17(19):2265-81. doi: 10.1002/(sici)1097-0258(19981015)17:19<2265::aid-sim918>3.0.co;2-b. PMID: 9802183.
 2. Boosted stumps: 
 - What is it: an ensemble of weak learners with boosting algorithms. We combine decision tree stumps (decision tree with depth of 1) to predict the propensity score of each sample to simulate a random sample in an observational setting. 
 - Implementation: boost_low = gbm(A~., data = train_low[-1], 
@@ -35,6 +34,8 @@ library(gbm)
 library(caret)
 high <- read.csv('highDim_dataset.csv')
 low <- read.csv('lowDim_dataset.csv')
+#high['A'] <- apply(high['A'],1,as.factor)
+#low['A'] <- apply(low['A'],1,as.factor)
 ```
 
 # Low Dimension
@@ -53,10 +54,10 @@ test_low <- low[-train_idx,]
 start0 <- Sys.time()
 
 boost0 = gbm(A~., data = train_low[-1], 
-            n.trees = 500, # the number of trees, 100, 120, 300, 500
+            n.trees = 500, # the number of trees, 100, 1000. 10000, no big diff
             shrinkage = 0.03, # learning rate, 0.01, 0.03, 0.05, 0.1
             interaction.depth = 1 # depth of each tree, set 1 as stumps
-            )
+            ) # here, the parameters we get are from grid search results - see the bottom of the file for detail
 
 # n.trees <- seq(from = 100, to = 10000, by = 100)
 # n.trees set the number of trees to be built. Here I choose 1000 manually.
@@ -103,10 +104,10 @@ test_high <- high[-train_idx,]
 start1 <- Sys.time()
 
 boost1 = gbm(A~., data = train_high[-1], 
-            n.trees = 100, # the number of trees 100
-            shrinkage = 0.001, # learning rate 0.001
+            n.trees = 100, # the number of trees
+            shrinkage = 0.001, # learning rate
             interaction.depth = 1 # stumps
-            )
+            ) # here, the parameters we get are from grid search results - see the bottom of the file for detail
 
 #n.trees <- seq(from = 100, to = 10000, by = 100)
 # n.trees set the number of trees to be built. Here I choose 1000 manually.
@@ -138,4 +139,58 @@ summary(model1)
 cat('The total time using boosted stumps and regression adjustment with high dimension data is:', end1 - start1,'s')
 ```
 
-The density plots show the matching of propensity scores between the two groups. The boosted stumps performs well on both of the datasets as they show the density plots between two groups overlap each other on a large scale. For the parameters of the regression model, higher dimension data requires smaller learning rate and less number of trees. I would suggest to use the combination on higher dimension datasets, as the boosting stumps identifying variable relative influence effectively and produces well-matched propensity scores between the experiment group and the control group.
+The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluation. The density plot shows the overlap of propensity score between the two groups.
+
+Additional Code: 
+In this part, we included our code for conducting grid search for lowdim. The procedure is similar in highdim. For the readability of the file, we choose to comment out the code. 
+
+## Grid Search for lowdim
+```{r Grid Search for lowdim}
+# grid search
+# hyper_grid_low1 <- expand.grid(
+#  shrinkage = c(.01, 0.03, 0.05),
+#  interaction.depth = 1 - since it is boosted stumps
+#  n.minobsinnode = c(5, 10, 15),
+#  bag.fraction = c(.65, .8, 1), 
+#  optimal_trees = 0,               # a place to dump results
+#  min_RMSE = 0                     # a place to dump results
+#)
+
+# randomize data
+# random_index <- sample(1:nrow(train_low), nrow(train_low))
+# random_ames_train <- train_low[random_index, ]
+
+# grid search 
+# for(i in 1:nrow(hyper_grid_low1)) {
+  # reproducibility
+#  set.seed(2020)
+  # train model
+#  gbm.tune <- gbm(
+#    formula = A~.,
+#    data = train_low[-1],
+#    n.trees = 500,
+#    interaction.depth = hyper_grid_low1$interaction.depth[i],
+#    shrinkage = hyper_grid_low1$shrinkage[i],
+#    n.minobsinnode = hyper_grid_low1$n.minobsinnode[i],
+#  bag.fraction = hyper_grid_low1$bag.fraction[i],
+#   train.fraction = .75,
+#    n.cores = NULL, # will use all cores by default
+#    verbose = FALSE
+#  )
+
+  # add min training error and trees to grid
+#  hyper_grid_low1$optimal_trees[i] <- which.min(gbm.tune$valid.error)
+#  hyper_grid_low1$min_RMSE[i] <- sqrt(min(gbm.tune$valid.error))
+# }
+
+# hyper_grid_low1 %>% 
+# dplyr::arrange(min_RMSE) %>%
+#  head(10)
+```
+
+
+
+
+
+
+
