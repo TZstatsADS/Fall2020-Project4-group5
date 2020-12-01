@@ -565,7 +565,7 @@ The table shows the result of the three algorithm's ATE in the two different dat
 
 | Algorithm | **ATE High** | difference | **ATE Low**  | difference |
 |-----------|----------|---------|--------------------|-------------------|
-| True ATE  | -3 | 2.5 | - | - |
+| True ATE  | -3 | - | 2.5 |- |
 | Doubly Robust Estimation + Boosted Stumps | -2.9626 | 2.5187 | 0.0374 | 0.0187 |
 | Regression Adjustment + Boosted Stumps | -3.0830 | 2.5271 | 0.0830 | 0.0271 |
 | Regression Estimate | -2.9598 | 2.5269 | 0.0402 | 0.0269 |
