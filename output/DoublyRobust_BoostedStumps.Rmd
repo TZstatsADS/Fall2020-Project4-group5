@@ -114,7 +114,7 @@ Calculate propensity scores for all entries in high.csv
 ```{r}
 
 tm_highe2 <- system.time(
-  high$e <- predict(boost.high, X.high, n.trees = 40, type = 'response')
+  high$e <- predict(boost.high, X.high, n.trees = 60, type = 'response')
 )
 
 ```
@@ -185,7 +185,7 @@ low$m0<-predict(control.model.low,X.low)
 
 Get propensity score for all entries using boosted stumps (Gradient Boosting Machine).
 
-Using grid search to get proper parameters for gbm.
+Using grid search to get proper parameters for gbm
 ```{r Grid Search for lowdim,message=FALSE,eval=FALSE}
 # grid search
 hyper_grid_low1 <- expand.grid(
@@ -229,7 +229,7 @@ hyper_grid_low1 %>%
 ```
 
 
-Apply the parameters with min_RMSE (n.trees=60, shrinkage=0.1, n.minobsinnode=10, bag.fraction=0.65).
+Apply the parameters with min_RMSE (n.trees=60, shrinkage=0.1, n.minobsinnode=15, bag.fraction=0.8).
 ```{r,message=F}
 set.seed(2020)
 
@@ -239,8 +239,8 @@ boost.low <- gbm(A~., data = train_low[-1],
                  n.trees = 60, # the number of trees
                  shrinkage = 0.1, # learning rate
                  interaction.depth = 1, # total split
-                 n.minobsinnode = 10,
-                 bag.fraction = 0.65
+                 n.minobsinnode = 15,
+                 bag.fraction = 0.8
             )
 )
 
@@ -250,7 +250,7 @@ boost.low <- gbm(A~., data = train_low[-1],
 Calculate propensity scores for all entries in high.csv
 ```{r}
 tm_lowe2 <- system.time(
-low$e <- predict(boost.low, X.low, n.trees = 40, type = 'response')
+low$e <- predict(boost.low, X.low, n.trees = 60, type = 'response')
 )
 ```
 
@@ -299,6 +299,5 @@ table
 ```
 
 
-    
     
     
