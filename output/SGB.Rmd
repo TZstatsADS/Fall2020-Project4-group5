@@ -1,14 +1,30 @@
 ---
-title: "Boosted Stumps"
-author: "Xinyi Zhang"
+title: "Boosted Stumps & Regression Adjustment"
+author: "Xinyi Zhang & Jiaqi Yuan"
 date: "11/12/2020"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-**The ATEs we got from boosted stumps and regression adjustment are 2.4108 and -3.1261. We conclude that it is a close estimate where the true ATEs that are 2.5 and -3.**
+**The ATEs we got from boosted stumps and regression adjustment are 2.5271 and -3.083. We conclude that it is a close estimate where the true ATEs that are 2.5 and -3.**
+
+## Methodology and Implementation
+1. Reference: D'Agostino RB Jr. Propensity score methods for bias reduction in the comparison of a treatment to a non-randomized control group. Stat Med. 1998 Oct 15;17(19):2265-81. doi: 10.1002/(sici)1097-0258(19981015)17:19<2265::aid-sim918>3.0.co;2-b. PMID: 9802183.
+2. Boosted stumps: 
+- What is it: an ensemble of weak learners with boosting algorithms. We combine decision tree stumps (decision tree with depth of 1) to predict the propensity score of each sample to simulate a random sample in an observational setting. 
+- Implementation: boost_low = gbm(A~., data = train_low[-1], 
+            n.trees = 500, # the number of trees
+            shrinkage = 0.03, # learning rate
+            interaction.depth = 1, # depth of each tree, stumps
+            cv.folds=5
+            )
+3. Regression adjustment: 
+- What is it: regress the outcome variable Y on treatment indicator variable A and the estimated propensity score(pred_high); We use the estimated coefficient on the A as indicator variable as an estimate of ATE
+- Implementation: ATE_high = lm(Y~A+pred_high,data=high)
 
 
 ## Data Preparation
@@ -23,110 +39,158 @@ low <- read.csv('lowDim_dataset.csv')
 ```
 
 # Low Dimension
-```{r}
+```{r cache=TRUE}
 # trani-test split
+set.seed(2021)
 n <- nrow(low)
 n_train <- round(n*(4/5),0)
 train_idx <- sample(1:n,n_train)
 # test_idx <- setdiff(1:2000, train)
 train_low <- low[train_idx,]
 test_low <- low[-train_idx,]
-```
+
 
 ## Propensity Score
-```{r}
-set.seed(2020)
-boost0 = gbm(A~., data = train_low[-1], 
-            n.trees = 2000, # the number of trees, 100, 1000. 10000, no big diff
-            shrinkage = 0.001, # learning rate, 0.01, 0.001, 0.0001
-            interaction.depth = 3 # total split, 3, 4, 5
-            )
-summary(boost0)
-```
+start0 <- Sys.time()
 
-```{r}
-#n.trees <- seq(from = 100, to = 10000, by = 100)
+boost0 = gbm(A~., data = train_low[-1], 
+            n.trees = 500, # the number of trees, 100, 1000. 10000, no big diff
+            shrinkage = 0.03, # learning rate, 0.01, 0.03, 0.05, 0.1
+            interaction.depth = 1 # depth of each tree, set 1 as stumps
+            ) # here, the parameters we get are from grid search results - see the bottom of the file for detail
+
+# n.trees <- seq(from = 100, to = 10000, by = 100)
 # n.trees set the number of trees to be built. Here I choose 1000 manually.
 pred0 <- predict(boost0, test_low[-c(1,2)],n.trees = 1000, type = 'response')
-length(pred0)
-```
 
-```{r}
 # plot by A to see the distribution of the predicted value
 g0_index <- test_low$A == 0
 g1_index <- test_low$A == 1
-for(col in colnames(pred0)){
-  g0 <- pred0[g0_index,col]
-  g1 <- pred0[g1_index,col]
-  plot(density(g0),col = 'red')
-  lines(density(g1),col = 'blue')
-  legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
-}
-```
+plot(density(pred0[g0_index]),col = 'red')
+lines(density(pred0[g1_index]),col = 'blue')
+legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
 
 ## ATE
-```{r regression adjustment1}
+
 # build a regression model based on the propensity score
 # structure the data frame
 ps0 <- predict(boost0, low[-c(1,2)],n.trees = 100, type = 'response')
 df0<-data.frame(low$Y,low$A, ps0)
 colnames(df0) <- c('Y','A','PS')
 model0<-lm(df0$Y~df0$A+df0$PS)
+
+end0 <- Sys.time()
+```
+
+```{r summary 1}
+summary(boost0)
 summary(model0)
+cat('The total time using boosted stumps and regression adjustment with low dimension data is:', end0 - start0,'s')
 ```
 
 # High Dimension
 ```{r split}
 # train-test split
+set.seed(2021)
 n <- nrow(high)
 n_train <- round(n*(4/5),0)
 train_idx <- sample(1:n,n_train)
 # test_idx <- setdiff(1:2000, train)
 train_high <- high[train_idx,]
 test_high <- high[-train_idx,]
-```
+
 
 ## Propensity Score
-```{r gbt}
-set.seed(2020)
+start1 <- Sys.time()
+
 boost1 = gbm(A~., data = train_high[-1], 
-            n.trees = 1000, # the number of trees
+            n.trees = 100, # the number of trees
             shrinkage = 0.001, # learning rate
-            interaction.depth = 2 # total split
-            )
-summary(boost1)
-```
+            interaction.depth = 1 # stumps
+            ) # here, the parameters we get are from grid search results - see the bottom of the file for detail
 
-The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluator. 
-
-```{r test}
 #n.trees <- seq(from = 100, to = 10000, by = 100)
 # n.trees set the number of trees to be built. Here I choose 1000 manually.
 pred1 <- predict(boost1, test_high[-c(1,2)],n.trees = 1000, type = 'response')
 length(pred1)
-```
-```{r plot}
+
 # plot by A to see the distribution of the predicted value
 g0_index <- test_high$A == 0
 g1_index <- test_high$A == 1
-for(col in colnames(pred1)){
-  g0 <- pred[g0_index,col]
-  g1 <- pred[g1_index,col]
-  plot(density(g0),col = 'red')
-  lines(density(g1),col = 'blue')
-  legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
-}
-```
-
-The density plot shows the overlap of propensity score between the two groups. 
+plot(density(pred1[g0_index]),col = 'red')
+lines(density(pred1[g1_index]),col = 'blue')
+legend('topright',legend = c('group 0','group 1'),fill = c('red','blue'))
 
 ## ATE
-```{r regression adjustment2}
+
 # build a regression model based on the propensity score
 # structure the data frame
 ps1 <- predict(boost1, high[-c(1,2)],n.trees = 100, type = 'response')
 df1<-data.frame(high$Y,high$A, ps1)
 colnames(df1) <- c('Y','A','PS')
 model1<-lm(df1$Y~df1$A+df1$PS)
-summary(model1)
+
+end1 <- Sys.time()
 ```
+
+```{r summary2}
+summary(boost1)
+summary(model1)
+cat('The total time using boosted stumps and regression adjustment with high dimension data is:', end1 - start1,'s')
+```
+
+The summary of the model gives a feature importance plot. Conduct prediction on the test set so we can have Test Error as an evaluation. The density plot shows the overlap of propensity score between the two groups.
+
+Additional Code: 
+In this part, we included our code for conducting grid search for lowdim. The procedure is similar in highdim. For the readability of the file, we choose to comment out the code. 
+
+## Grid Search for lowdim
+```{r Grid Search for lowdim}
+# grid search
+# hyper_grid_low1 <- expand.grid(
+#  shrinkage = c(.01, 0.03, 0.05),
+#  interaction.depth = 1 - since it is boosted stumps
+#  n.minobsinnode = c(5, 10, 15),
+#  bag.fraction = c(.65, .8, 1), 
+#  optimal_trees = 0,               # a place to dump results
+#  min_RMSE = 0                     # a place to dump results
+#)
+
+# randomize data
+# random_index <- sample(1:nrow(train_low), nrow(train_low))
+# random_ames_train <- train_low[random_index, ]
+
+# grid search 
+# for(i in 1:nrow(hyper_grid_low1)) {
+  # reproducibility
+#  set.seed(2020)
+  # train model
+#  gbm.tune <- gbm(
+#    formula = A~.,
+#    data = train_low[-1],
+#    n.trees = 500,
+#    interaction.depth = hyper_grid_low1$interaction.depth[i],
+#    shrinkage = hyper_grid_low1$shrinkage[i],
+#    n.minobsinnode = hyper_grid_low1$n.minobsinnode[i],
+#  bag.fraction = hyper_grid_low1$bag.fraction[i],
+#   train.fraction = .75,
+#    n.cores = NULL, # will use all cores by default
+#    verbose = FALSE
+#  )
+
+  # add min training error and trees to grid
+#  hyper_grid_low1$optimal_trees[i] <- which.min(gbm.tune$valid.error)
+#  hyper_grid_low1$min_RMSE[i] <- sqrt(min(gbm.tune$valid.error))
+# }
+
+# hyper_grid_low1 %>% 
+# dplyr::arrange(min_RMSE) %>%
+#  head(10)
+```
+
+
+
+
+
+
+
