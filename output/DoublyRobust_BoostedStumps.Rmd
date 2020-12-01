@@ -48,13 +48,12 @@ high$m0<-predict(control.model.high,X.high)
 
 Get propensity score for all entries using boosted stumps (Gradient Boosting Machine).
 
-Using grid search to get proper parameters for gbm
+Using grid search to get proper parameters for gbm.
 ```{r Grid Search for highdim,message=FALSE,eval=FALSE}
 # grid search
 hyper_grid_high1 <- expand.grid(
   n.trees = c(40,50,60),
   shrinkage = c(.01, .05, .1),
-  interaction.depth = c(1, 3, 5),
   n.minobsinnode = c(5, 10, 15),
   bag.fraction = c(.65, .8, 1), 
   optimal_trees = 0,               # a place to dump results
@@ -75,7 +74,7 @@ for(i in 1:nrow(hyper_grid_high1)) {
     distribution = "bernoulli",
     data = train_high[-1],
     n.trees = hyper_grid_high1$n.trees[i],
-    interaction.depth = hyper_grid_high1$interaction.depth[i],
+    interaction.depth = 1,
     shrinkage = hyper_grid_high1$shrinkage[i],
     n.minobsinnode = hyper_grid_high1$n.minobsinnode[i],
     bag.fraction = hyper_grid_high1$bag.fraction[i],
@@ -92,18 +91,18 @@ hyper_grid_high1 %>%
   head(10)
 ```
 
-Apply the parameters with min_RMSE (n.trees=40, shrinkage=0.1, interaction.depth=5, n.minobsinnode=5, bag.fraction=0.8).
+Apply the parameters with min_RMSE (n.trees=60, shrinkage=0.1, n.minobsinnode=10, bag.fraction=1).
 ```{r,message=F}
 set.seed(2020) 
 
 tm_highe1 <- system.time(
   boost.high<-gbm(A~., data = train_high[-1], 
                   distribution = "bernoulli",
-                   n.trees = 40, # the number of trees
+                   n.trees = 60, # the number of trees
                    shrinkage = 0.1, # learning rate
-                   interaction.depth = 5, # total split
-                  n.minobsinnode = 5,
-                  bag.fraction = 0.8
+                   interaction.depth = 1, # total split
+                  n.minobsinnode = 10,
+                  bag.fraction = 1
                    )
   )
 
@@ -186,13 +185,12 @@ low$m0<-predict(control.model.low,X.low)
 
 Get propensity score for all entries using boosted stumps (Gradient Boosting Machine).
 
-Using grid search to get proper parameters for gbm
+Using grid search to get proper parameters for gbm.
 ```{r Grid Search for lowdim,message=FALSE,eval=FALSE}
 # grid search
 hyper_grid_low1 <- expand.grid(
   n.trees = c(40,50,60),
   shrinkage = c(.01, .05, .1),
-  interaction.depth = c(1, 3, 5),
   n.minobsinnode = c(5, 10, 15),
   bag.fraction = c(.65, .8, 1), 
   optimal_trees = 0,               # a place to dump results
@@ -213,7 +211,7 @@ for(i in 1:nrow(hyper_grid_low1)) {
     distribution = "bernoulli",
     data = train_low[-1],
     n.trees = hyper_grid_low1$n.trees[i],
-    interaction.depth = hyper_grid_low1$interaction.depth[i],
+    interaction.depth = 1,
     shrinkage = hyper_grid_low1$shrinkage[i],
     n.minobsinnode = hyper_grid_low1$n.minobsinnode[i],
     bag.fraction = hyper_grid_low1$bag.fraction[i],
@@ -231,17 +229,17 @@ hyper_grid_low1 %>%
 ```
 
 
-Apply the parameters with min_RMSE (n.trees=40, shrinkage=0.1, interaction.depth=1, n.minobsinnode=15, bag.fraction=0.65).
+Apply the parameters with min_RMSE (n.trees=60, shrinkage=0.1, n.minobsinnode=10, bag.fraction=0.65).
 ```{r,message=F}
 set.seed(2020)
 
 tm_lowe1 <- system.time(
 boost.low <- gbm(A~., data = train_low[-1], 
                  distribution = "bernoulli",
-                 n.trees = 40, # the number of trees
+                 n.trees = 60, # the number of trees
                  shrinkage = 0.1, # learning rate
                  interaction.depth = 1, # total split
-                 n.minobsinnode = 15,
+                 n.minobsinnode = 10,
                  bag.fraction = 0.65
             )
 )
