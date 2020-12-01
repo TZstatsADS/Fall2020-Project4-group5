@@ -1,6 +1,6 @@
 ---
 title: "Testing Report"
-author: "Xujie Ma, Yiqi Lei, Xinyi Zhang, Jiaqi Yuan"
+author: "Xujie Ma, Yiqi Lei, Xinyi Zhang, Jiaqi Yuan, Yue Liang"
 date: "11/26/2020"
 output:
   pdf_document: default
@@ -9,9 +9,13 @@ output:
 ---
 
 In this notebook, we are presenting 3 algorithms: 
+
 1. 14 A3+P5 Doubly Robust Estimation + boosted stumps 
+
 2. 21 A6+P5 Regression Adjustment + boosted stumps
+
 3. 15 A4    Regression Estimate
+
 
 ```{r setup,warning=FALSE,message=FALSE}
 library(gbm)
@@ -55,7 +59,7 @@ high$m0<-predict(control.model.high,X.high)
 Get propensity score for all entries using boosted stumps (Gradient Boosting Machine).
 
 Using grid search to get proper parameters for gbm.
-```{r Grid Search for highdim,message=FALSE,eval=FALSE}
+```{r,message=FALSE,eval=FALSE}
 # grid search
 hyper_grid_high1 <- expand.grid(
   n.trees = c(40,50,60),
@@ -192,7 +196,7 @@ low$m0<-predict(control.model.low,X.low)
 Get propensity score for all entries using boosted stumps (Gradient Boosting Machine).
 
 Using grid search to get proper parameters for gbm
-```{r Grid Search for lowdim,message=FALSE,eval=FALSE}
+```{r,message=FALSE,eval=FALSE}
 # grid search
 hyper_grid_low1 <- expand.grid(
   n.trees = c(40,50,60),
@@ -325,11 +329,10 @@ table
 
 ## Data Preparation
 ```{r}
-setwd('/Users/xinyi0351/Desktop/Fall 2020/5243/project 4/')
 library(gbm)
 library(caret)
-high <- read.csv('highDim_dataset.csv')
-low <- read.csv('lowDim_dataset.csv')
+high <- read.csv('../data/highDim_dataset.csv')
+low <- read.csv('../data/lowDim_dataset.csv')
 #high['A'] <- apply(high['A'],1,as.factor)
 #low['A'] <- apply(low['A'],1,as.factor)
 ```
@@ -482,4 +485,124 @@ In this part, we included our code for conducting grid search for lowdim. The pr
 # dplyr::arrange(min_RMSE) %>%
 #  head(10)
 ```
+
+# Algo 3: 15 A4 Regression Estimate 
+
+## Understanding
+
+Regression Estimate is a really simple estimation model to the calculate ATE, which do not require Propensity Scores calculation. This makes it a straight forward model and a computational efficient model. By implementing the linear regression on treated groups and untreated groups, we could regress on different groups to get the two different sets of paramaters and then by predicting the models on the whole dataset, substracting the prediction we can get the difference between the two regression models. In the end, we can calculate the ATE(Average Treatment Effect) by taking the average of the difference.
+
+\[ ATE = N^{-1} \sum^N_{i=1}(\hat {m_1}(X_i)-\hat {m_0}(X_i))\]
+
+Denote that 
+
+$N$ is the number of samples in the dataset, 
+
+$X_i$ is the datapoint in the dataset, 
+
+$m_1$ is the regression model learned from the treated groups, 
+
+$m_0$ is the regression model learned from the untreated groups, 
+
+$\hat {m_1}(X_i)$ is the prediction of the regression model $m_1$ on the datapoint $X_i$, 
+
+$\hat {m_0}(X_i)$ is the prediction of the regression model $m_0$ on the datapoint $X_i$.
+
+## Implementation
+### Read the data and split the data into two groups -- Treated Group and Untreated Group
+
+```{r}
+high_data <-read.csv('../data/highDim_dataset.csv')
+low_data <-read.csv('../data/lowDim_dataset.csv')
+
+N_high <- dim(high_data)[1]
+N_low <- dim(low_data)[1]
+
+high_data_X <- high_data[,3:dim(high_data)[2]]
+low_data_X <- low_data[,3:dim(low_data)[2]]
+
+high_treated <- high_data[high_data$A==1,-2]
+high_untreated <- high_data[high_data$A==0,-2]
+
+N_high_treated <- dim(high_treated)[1]
+N_high_untreated <- dim(high_untreated)[1]
+
+low_treated <- low_data[low_data$A==1,-2]
+low_untreated <- low_data[low_data$A==0,-2]
+
+N_low_treated <- dim(low_treated)[1]
+N_low_untreated <- dim(low_untreated)[1]
+```
+
+
+### Train the data and record the training time of two datasets
+
+```{r}
+time<- system.time({
+  high_treated_lm <- lm(Y~.,data = high_treated);
+  high_untreated_lm <- lm(Y~.,data = high_untreated);
+  high_treated_predict_all <- predict(high_treated_lm,newdata = high_data_X);
+  high_untreated_predict_all <- predict(high_untreated_lm,newdata = high_data_X)})
+train_time_high <- time[1]
+train_time_high
+
+time<- system.time({
+  low_treated_lm <- lm(Y~.,data = low_treated);
+  low_untreated_lm <- lm(Y~.,data = low_untreated);
+  low_treated_predict_all <- predict(low_treated_lm,newdata = low_data_X);
+  low_untreated_predict_all <- predict(low_untreated_lm,newdata = low_data_X)})
+train_time_low <- time[1]
+train_time_low
+
+```
+
+### Calculate the ATE
+
+```{r}
+reg_est_ATE_high<-sum(high_treated_predict_all - high_untreated_predict_all)/N_high
+reg_est_ATE_low<-sum(low_treated_predict_all - low_untreated_predict_all)/N_low
+reg_est_ATE_high
+reg_est_ATE_low
+```
+
+### Compare the ATE with the true ATE
+
+```{r}
+# True ATE:
+true_ATE_high <- -3
+true_ATE_low <- 2.5
+
+# Comparison:
+abs(true_ATE_high - reg_est_ATE_high) /abs(true_ATE_high)
+abs(true_ATE_low - reg_est_ATE_low) /abs(true_ATE_low)
+
+```
+## Conclustions
+
+\textbf{Comparision between the two dataset}
+
+We can conclude that the model is more fit to the low dimension dataset. With higher dimension, the ATE has higher bias rate(1.34% vs 1.08%).
+
+
+
+\textbf{Comparision among the three models}
+
+The table shows the result of the three algorithm's ATE in the two different datasets.
+
+| Algorithm | High ATE | Low ATE | High Train Time | Low Train Time |
+|-----------|----------|---------|--------------------|-------------------|
+| True ATE  | -3 | 2.5 | - | - |
+| Doubly Robust Estimation + Boosted Stumps | -2.9626 | 2.5187 | 1.2180 | 0.0230 |
+| Regression Estimate | -2.9598 | 2.5269 | 0.2270 | 0.0190 |
+| Regression Adjustment + Boosted Stumps | -3.0830 | 2.5271 | 0.5060 | 0.1287 |
+
+From the table above, we can clearly conclude that the Regression Estimate's accuracy is relatively high, but slightly lower than the Doubly Robust Estimation + Boosted Stumps model. However, the training time of Doubly Robust Estimation + Boosted Stumps model is higher than the Regression Estimate model for both high dimension dataset and low dimension dataset. We can conclude that the Regression Estimate is more computational efficient but slightly less accuracy than the Doubly Robust Estimation + Boosted Stumps model.
+
+
+
+
+
+
+
+
 
