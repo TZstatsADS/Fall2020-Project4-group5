@@ -312,7 +312,7 @@ table
             cv.folds=5
             )
 3. Regression adjustment: 
-- What is it: regress the outcome variable Y on treatment indicator variable A and the estimated propensity score(pred_high); We use the estimated coefficient on the A as indicator variable as an estimate of ATE
+- What is it: regress the outcome variable Y on treatment indicator variable A and the estimated propensity score(pred_high); We use the estimated coefficient on the indicator variable A as an estimate of ATE.
 - Implementation: ATE_high = lm(Y~A+pred_high,data=high)
 
 
@@ -588,7 +588,7 @@ The table shows the result of the three algorithm's ATE in the two different dat
 | Regression Adjustment + Boosted Stumps | -3.083 | 0.083 | 2.527 | 0.027 |
 | Regression Estimate | -2.960 | 0.040| 2.527  | 0.027 |
 
-All of the models are well-performed after tuning. From the table above, we can see that the Doubly Robust Estimation + Boosted Stumps model has the smallest difference with the true ATE on both of the datasets. Results of Regression Estimate and Regression adjustment are close on the high dimension datasets while the former model outperformed on low dimension. 
+All of the models are well-performed after tuning. From the table above, we can see that the Doubly Robust Estimation + Boosted Stumps model has the smallest difference with the true ATE on both of the datasets. Results of Regression Estimate and Regression adjustment are close on the low dimension datasets while the former model outperformed on high dimension datasets. 
 
 
 | Algorithm | Training Time High | Training Time Low |
@@ -598,9 +598,9 @@ All of the models are well-performed after tuning. From the table above, we can 
 | Regression Estimate  | 0.166 | 0.015 |
 
 
-Comparing the training time on each of the methods and the datasets, the regression estimate has the shortest training time on both of the datasets. Regression adjustment + boosted stumps have a shorter training time than doubly robust estimation on the high dimension dataset, but six times longer on the low dimension dataset. We conclude that the regression estimate is more computationally efficient than the Doubly Robust Estimation + Boosted Stumps model.
+Comparing the training time on each of the methods and the datasets, the regression estimate has the shortest training time on both of the datasets. Regression adjustment + boosted stumps have a shorter training time than doubly robust estimation on the high dimension dataset, but longer on the low dimension dataset. We conclude that the regression estimate is more computationally efficient than the Doubly Robust Estimation + Boosted Stumps model.
 
-For model flexibility, we would recommend Doubly Robust Estimation + Boosted Stumps, as it can be customized with grid search and achieve higher accuracy for high and low dimension data. For efficiency, the Regression Estimate would give an informative idea of the ATE between the experiment and the control group in a productive manner.
+For model flexibility, we would recommend Doubly Robust Estimation + Boosted Stumps, as it can be customized with grid search and achieve higher accuracy for high and low dimension data. For computational efficiency, the Regression Estimate would give an informative idea of the ATE between the experiment and the control group in a productive manner.
 
 
 
