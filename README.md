@@ -12,7 +12,13 @@ Term: Fall 2020
 	+ Xuejie Ma
 	+ Yiqi Lei
 	+ Jiaqi Yuan
-+ Project summary: Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
++ Project summary: 
+- Goal: Compare the performance(runtime&accuracy) the following 3 algorithms on two datasets:
+	1. Doubly Robust Estimation + Boosted Stumps
+	2. Regression Adjustment + Boosted Stumps
+	3. Regression Estimate
+- Datasets: Implement the three models on both Low Dimension Dataset and High Dimension Dataset
+- Causal Effect: Utilize the Propensity Scores and the variables to calculate the Average Treatment Effect (ATE)
 	
 **Contribution statement**: All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 - Xinyi Zhang: Worked on Regression Adjustment and Boosted Stumps with Jiaqi. Studied the papers, implemented the method in R, and compared the model performance between the two datasets. Summed up and finalized the test report. 
