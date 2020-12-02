@@ -579,7 +579,8 @@ We can conclude that the model is more fit to the low dimension dataset. With hi
 \textbf{Comparision among the three models}
 
 The table shows the result of the three algorithm's ATE in the two different datasets.
-(The result table might be different from the previous knited result due to the randomness.)
+
+(The result table might be different from the previously printed result due to the randomness.)
 
 | Algorithm | **ATE High** | difference | **ATE Low**  | difference |
 |-----------|----------|---------|--------------------|-------------------|
@@ -589,6 +590,8 @@ The table shows the result of the three algorithm's ATE in the two different dat
 | Regression Estimate | -2.960 | 0.040| 2.527  | 0.027 |
 
 All of the models are well-performed after tuning. From the table above, we can see that the Doubly Robust Estimation + Boosted Stumps model has the smallest difference with the true ATE on both of the datasets. Results of Regression Estimate and Regression adjustment are close on the low dimension datasets while the former model outperformed on high dimension datasets. 
+
+(The tarin time comparison table might be different from the previously printed train time due to different computational power.)
 
 
 | Algorithm | Training Time High | Training Time Low |
