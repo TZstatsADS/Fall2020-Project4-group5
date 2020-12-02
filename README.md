@@ -32,7 +32,7 @@ Term: Fall 2020
 	
 **Contribution statement**: All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 - Xinyi Zhang: Worked on Regression Adjustment and Boosted Stumps with Jiaqi. Studied the papers, implemented the method in R, and compared the model performance between the two datasets. Summed up and finalized the test report. 
-- Yue Liang: Conducted research on Regression Estimate and implemented it on two different datasets; compare the results of Regression Estimate to the other two models; come up with a conclusion of the model; prepare slides for the presentation and present it in class; 
+- Yue Liang: Conducted research on Regression Estimate and implemented it on two different datasets; compare the results of Regression Estimate to the other two models; come up with a conclusion of the model; prepare slides for the presentation and present it in class; complete readme.md file.
 - Yiqi Lei: studied Doubly Robust Estimation and boosted stumps, did grid search on parameters, implemented the algorithm for datasets, and estimated the ATEs with Xujie Ma.
 - Jiaqi Yuan: Worked on Regression Adjustment and Boosted stumps with Xinyi. We read the original paper,implemented algorithm, conducted grid search and compared model performance on different datasets
 - Xujie Ma: implemented a version of Doubly Robust Estimation, verified different calculation methods to ensure they both get correct answers and compiled a part of the main book.
