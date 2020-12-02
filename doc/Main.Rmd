@@ -581,9 +581,9 @@ The table shows the result of the three algorithm's ATE in the two different dat
 | Algorithm | **ATE High** | difference | **ATE Low**  | difference |
 |-----------|----------|---------|--------------------|-------------------|
 | True ATE  | -3 | - | 2.5 |- |
-| Doubly Robust Estimation + Boosted Stumps | -2.9626 | 2.5187 | 0.0374 | 0.0187 |
-| Regression Adjustment + Boosted Stumps | -3.0830 | 2.5271 | 0.0830 | 0.0271 |
-| Regression Estimate | -2.9598 | 2.5269 | 0.0402 | 0.0269 |
+| Doubly Robust Estimation + Boosted Stumps | -2.9626 | 0.0374| 2.5187  | 0.0187 |
+| Regression Adjustment + Boosted Stumps | -3.0830 | 0.0830 | 2.5271 | 0.0271 |
+| Regression Estimate | -2.9598 | 0.0402| 2.5269  | 0.0269 |
 
 All of the models are well-performed after tuning. From the table above, we can see that the Doubly Robust Estimation + Boosted Stumps model has the smallest difference with the true ATE on both of the datasets. Results of Regression Estimate and Regression adjustment are close on the high dimension datasets while the former model outperformed on low dimension. 
 
@@ -591,7 +591,7 @@ All of the models are well-performed after tuning. From the table above, we can 
 | Algorithm | Training Time High | Training Time Low |
 |-----------|----------|---------|
 | Doubly Robust Estimation + Boosted Stumps | 1.2180 | 0.0230 |
-| Regression Estimate  | 0.2270 | 0.0190 |
+| Regression Estimate  | 0.1440 | 0.0100 |
 | Regression Adjustment + Boosted Stumps | 0.5060 | 0.1287 |
 
 Comparing the training time on each of the methods and the datasets, the regression estimate has the shortest training time on both of the datasets. Regression adjustment + boosted stumps have a shorter training time than doubly robust estimation on the high dimension dataset, but six times longer on the low dimension dataset. We conclude that the regression estimate is more computationally efficient than the Doubly Robust Estimation + Boosted Stumps model.
