@@ -5,7 +5,7 @@
 Term: Fall 2020
 
 + Team # 5
-+ Projec title: Causal Analysis with three models comparison
++ Projec title: Causal Analysis With Comparison Of Three Models
 + Team members
 	+ Xinyi Zhang
 	+ Yue Liang
