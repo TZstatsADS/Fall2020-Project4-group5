@@ -49,6 +49,7 @@ in which $E(Y |T = t, X)$ is usually obtained by regressing the observed respons
 
 ## HighDim_dataset
 ```{r}
+set.seed(2020)
 # train-test split
 n <- nrow(high)
 n_train <- round(n*(4/5),0)
@@ -170,6 +171,7 @@ cat("Time for calculating ATE=", tm_highATE1[1], "s \n")
 
 ## LowDim_dataset
 ```{r}
+set.seed(2020)
 # train-test split
 n <- nrow(low)
 n_train <- round(n*(4/5),0)
