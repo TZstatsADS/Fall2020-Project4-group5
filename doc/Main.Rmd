@@ -37,8 +37,14 @@ low <- read.csv('../data/lowDim_dataset.csv')
 2. Doubly Robust Estimation
 - What is it: It is a method to estimate treatment effect. Doubly robust estimator has the smallest asymptotic variance. “Doubly robust” in the sense that the estimator remains consistent if either (i) if the propensity score model is correctly specified but the two regression models m0 and m1 are not or (ii) the two regression models are correctly specified but the propensity score model is not, although under these conditions it might not be the most efficient.
 - Implementation: 
-ATE=E[E(Y|T =1,X)−E(Y|T =0,X)]+E[I(T=1)/propensity_score-I(T=0)/(1-propensity_score)(Y-E(Y|T,X))],
-in which E(Y |T = t, X) is usually obtained by regressing the observed response Y on X in group t (where t = 0,1).
+$$
+\begin{aligned}
+ATE = &E[E(Y|T=1,X)\\
+&-E(Y|T=0,X)]\\
+&+E[(\frac{I[T=1]}{propensity\,score}-\frac{I[T=0]}{(1-propensity\,score)})(Y-E(Y|T,X))]
+\end{aligned}
+$$
+in which $E(Y |T = t, X)$ is usually obtained by regressing the observed response Y on X in group t (where t = 0,1).
 
 
 ## HighDim_dataset
