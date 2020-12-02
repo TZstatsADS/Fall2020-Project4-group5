@@ -31,6 +31,15 @@ low <- read.csv('../data/lowDim_dataset.csv')
 # Algo 1: 14 A3+P5 Doubly Robust Estimation + boosted stumps 
 
 ## Methodology and Implementation
+1. Reference: 
+[1] Chan D , Ge R , Gershony O , et al. Evaluating online ad campaigns in a pipeline: causal models at scale[C]// Acm Sigkdd International Conference on Knowledge Discovery & Data Mining. ACM, 2010.
+[2] Lunceford, Jared K . Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study[J]. Statistics in Medicine, 2017.
+2. Doubly Robust Estimation
+- What is it: It is a method to estimate treatment effect. Doubly robust estimator has the smallest asymptotic variance. “Doubly robust” in the sense that the estimator remains consistent if either (i) if the propensity score model is correctly specified but the two regression models m0 and m1 are not or (ii) the two regression models are correctly specified but the propensity score model is not, although under these conditions it might not be the most efficient.
+- Implementation: 
+ATE=E[E(Y|T =1,X)−E(Y|T =0,X)]+E[I(T=1)/propensity_score-I(T=0)/(1-propensity_score)(Y-E(Y|T,X))],
+in which E(Y |T = t, X) is usually obtained by regressing the observed response Y on X in group t (where t = 0,1).
+
 
 ## HighDim_dataset
 ```{r}
