@@ -23,7 +23,7 @@ Term: Fall 2020
 	+ Causal Effect: Utilize the Propensity Scores and the variables to calculate the Average Treatment Effect (ATE)
 	+ Results and Conclusions:
 	![Accuracy Comparison](figs/Accuracy_Comparison.png)
-	![Training Time Comparison](figs/Training_Time_Comparison.png)
+	![Training Time Comparison](figs/Trainning_Time_Comparison.png)
 	![Suggestions](figs/Suggestions.png)
 	
 **Contribution statement**: All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
