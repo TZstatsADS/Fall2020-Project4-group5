@@ -13,7 +13,7 @@ Term: Fall 2020
 	+ Yiqi Lei
 	+ Jiaqi Yuan
 + Project summary: 
-	+ Our Goal: Compare the performance(runtime&accuracy) the following 3 algorithms on two datasets:
+	+ Our Goal: Compare the performance(runtime&accuracy) the following 3 algorithms on two datasets (high dimensional dataset and low dimensional dataset):
 		1. Doubly Robust Estimation + Boosted Stumps
 		2. Regression Adjustment + Boosted Stumps
 		3. Regression Estimate
